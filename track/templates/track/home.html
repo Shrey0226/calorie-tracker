@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calorie Tracker</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" /><<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="consume_food" class="form-label">Select Food</label>
+          <select name="consume_food" id="consume_food" class="form-select">
+            {% for item in food %}
+              <option value="{{ item.name }}">{{ item.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Item</button>
+      </form>
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <table class="table" id="table">
+            <!-- Table content -->
+            <thead>
+              <tr>
+                <th>Meal</th>
+                <th>Carbs</th>
+                <th>Proteins</th>
+                <th>Fats</th>
+                <th>Calories</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cf in consumer %}
+                <tr>
+                  <td>{{ cf.food.name }}</td>
+                  <td>{{ cf.food.carbs }} gm</td>
+                  <td>{{ cf.food.protiens }} gm</td>
+                  <td>{{ cf.food.fats }} gm</td>
+                  <td>{{ cf.food.calories }} Kcal</td>
+                  <td>
+                    <form action="{% url 'delete' cf.id %}" method="post">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-danger delete-btn">Remove Item</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+              <tr>
+                <td id="name">
+                  <b>Total</b>
+                </td>
+                <td id="totalCarbs">
+                  <b></b>
+                </td>
+                <td id="totalProtiens">
+                  <b></b>
+                </td>
+                <td id="totalFats">
+                  <b></b>
+                </td>
+                <td id="totalCalories">
+                  <b></b>
+                </td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-container" style="position: relative; height:400px">
+            <canvas id="myChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <!-- Progress bar -->
+      <div class="mb-3">
+        <label for="progressBar" class="form-label">Today Calorie Goal (0 kcal - 2000 kcal)</label>
+        <div class="progress" id="progressBar">
+          <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="2000"></div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      var table = document.getElementById('table')
+      var carbs = 0,
+        protiens = 0,
+        fats = 0,
+        calories = 0
+      
+      for (var i = 1; i < table.rows.length - 1; i++) {
+        carbs += parseFloat(table.rows[i].cells[1].innerHTML)
+        protiens += parseFloat(table.rows[i].cells[2].innerHTML)
+        fats += parseFloat(table.rows[i].cells[3].innerHTML)
+        calories += parseFloat(table.rows[i].cells[4].innerHTML)
+      }
+      
+      document.getElementById('totalCarbs').innerHTML = `<b>${Math.round(carbs)} gm</b>`
+      document.getElementById('totalProtiens').innerHTML = `<b>${Math.round(protiens)} gm</b>`
+      document.getElementById('totalFats').innerHTML = `<b>${Math.round(fats)} gm</b>`
+      document.getElementById('totalCalories').innerHTML = `<b>${Math.round(calories)} Kcal</b>`
+      var progressWidth = (calories / 2000) * 100 // Calculate percentage
+      var progressBar = document.querySelector('.progress-bar')
+      progressBar.style.width = progressWidth + '%'
+      progressBar.setAttribute('aria-valuenow', calories)
+      
+      var ctx = document.getElementById('myChart').getContext('2d')
+      var myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Carbs', 'Proteins', 'Fats'],
+          datasets: [
+            {
+              label: 'Nutrients',
+              data: [carbs, protiens, fats],
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.5)', // Carbs (red)
+                'rgba(54, 162, 235, 0.5)', // Proteins (blue)
+                'rgba(255, 206, 86, 0.5)' // Fats (yellow)
+              ],
+              borderColor: [
+                'rgba(255, 99, 132, 1)', // Carbs (red)
+                'rgba(54, 162, 235, 1)', // Proteins (blue)
+                'rgba(255, 206, 86, 1)' // Fats (yellow)
+              ],
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom'
+            },
+            title: {
+              display: true,
+              text: 'Nutrient Composition'
+            }
+          }
+        }
+      })
+    </script>
+  </body>
+</html>
